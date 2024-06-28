@@ -5,11 +5,8 @@ from tkinter import *
 from PIL import Image
 from PIL import ImageTk 
 
-#Window Size
 
-#root = tk.Tk()
 
-#root.geometry("500x500")
 
 # Creates the database if none is existing 
 def create_database():
@@ -31,14 +28,39 @@ def add_image(first_name,last_name, image_name):
     conn.close()
 
 
-def get_images():
+def get_images() -> list:
     conn = sqlite3.connect('images.db')
     c = conn.cursor()
     c.execute("SELECT * FROM images")
     rows = c.fetchall()
     conn.commit()
     conn.close()
+    return rows
 
-    pass
+class ImageApp:
+    def __init__(self,root):
+        self.root: Tk = root
+        self.root.title("Photo Slide App")
+        #self.images: list = get_images()
+        self.create_widgets()
+    
+    def create_widgets(self):
+        #creates container to hold the pages
+        self.container = tk.Frame(self.root)
+        self.container.pack(fill='both', expand=True)
 
-create_database()
+
+        self.page1 = tk.Frame(self.container)
+        self.page2 = tk.Frame(self.container)
+        for frame in (self.page1, self.page2):
+            frame.grid(row=0, column=0, sticky='nsew')
+
+    
+
+root: Tk = tk.Tk()
+#app = ImageApp(root)
+#Window Size
+root.geometry("500x500")
+
+#create_database()
+root.mainloop()
