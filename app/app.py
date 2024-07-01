@@ -1,11 +1,11 @@
 import tkinter as tk
 import sqlite3
 import os
-from tkinter import *
+from tkinter import * 
+from tkinter import ttk
+import ttkbootstrap as tb
 from PIL import Image
 from PIL import ImageTk 
-
-
 
 
 # Creates the database if none is existing 
@@ -40,27 +40,44 @@ def get_images() -> list:
 class ImageApp:
     def __init__(self,root):
         self.root: Tk = root
+        self.style = tb.Style('superhero')
         self.root.title("Photo Slide App")
+        self.root.geometry("500x500")
+        self.tabControl = ttk.Notebook(self.root)
         #self.images: list = get_images()
         self.create_widgets()
+        self.fullscreen = False
+        self.root.bind('<Configure>', self.check_fullscreen)
+
+        
     
     def create_widgets(self):
-        #creates container to hold the pages
-        self.container = tk.Frame(self.root)
-        self.container.pack(fill='both', expand=True)
+        tab1: ttk.Frame = ttk.Frame(self.tabControl)
+        tab2: ttk.Frame = ttk.Frame(self.tabControl)
 
+        self.tabControl.add(tab1, text ='Tab 1') 
+        self.tabControl.add(tab2, text ='Tab 2') 
+        self.tabControl.pack(expand = 1, fill ="both") 
+        ttk.Label(tab1,  
+          text ="Welcome to GeeksForGeeks").grid(column = 0, row = 0, padx = 30, pady = 30) 
+        ttk.Label(tab2, 
+          text ="Lets dive into the world of computers").grid(column = 0, row = 0,  padx = 30, pady = 30) 
 
-        self.page1 = tk.Frame(self.container)
-        self.page2 = tk.Frame(self.container)
-        for frame in (self.page1, self.page2):
-            frame.grid(row=0, column=0, sticky='nsew')
+    def check_fullscreen(self, event=None):
+        width, height = self.root.winfo_width(), self.root.winfo_height()
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        if width >= screen_width and height >= screen_height:
+            self.tabControl.pack_forget()
+        else:
+            self.tabControl.pack(expand=1, fill="both")
 
     
 
 root: Tk = tk.Tk()
-#app = ImageApp(root)
+app = ImageApp(root)
 #Window Size
-root.geometry("500x500")
 
 #create_database()
 root.mainloop()
