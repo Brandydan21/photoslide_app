@@ -44,36 +44,60 @@ class ImageApp:
         self.root.title("Photo Slide App")
         self.root.geometry("500x500")
         self.tabControl = ttk.Notebook(self.root)
+        self.current_tab_index = 0
         #self.images: list = get_images()
-        self.create_widgets()
+        self.tab1: ttk.Frame = ttk.Frame(self.tabControl)
+        self.tab2: ttk.Frame = ttk.Frame(self.tabControl)
+        self.tab3: ttk.Frame = ttk.Frame(self.tabControl)
+
+        self.create_photo_tab()
+        self.create_add_photo_tab()
+        self.create_timer_page()
+        
+        
         self.fullscreen = False
         self.root.bind('<Configure>', self.check_fullscreen)
-
-        
     
-    def create_widgets(self):
-        tab1: ttk.Frame = ttk.Frame(self.tabControl)
-        tab2: ttk.Frame = ttk.Frame(self.tabControl)
+    def create_photo_tab(self):
+        self.tabControl.add(self.tab1,text ='Photo') 
+        ttk.Label(self.tab1, text ="Photo").grid(column = 0, row = 0, padx = 30, pady = 30) 
 
-        self.tabControl.add(tab1, text ='Tab 1') 
-        self.tabControl.add(tab2, text ='Tab 2') 
+    def create_add_photo_tab(self):
+
+        self.tabControl.add(self.tab2, text ='Add Photo') 
         self.tabControl.pack(expand = 1, fill ="both") 
-        ttk.Label(tab1,  
-          text ="Welcome to GeeksForGeeks").grid(column = 0, row = 0, padx = 30, pady = 30) 
-        ttk.Label(tab2, 
-          text ="Lets dive into the world of computers").grid(column = 0, row = 0,  padx = 30, pady = 30) 
+        ttk.Label(self.tab2, text ="Add Photo").grid(column = 0, row = 0,  padx = 30, pady = 30) 
 
+    def create_timer_page(self):
+
+        self.tabControl.add(self.tab3, text ='Timer') 
+        self.tabControl.pack(expand = 1, fill ="both") 
+        ttk.Label(self.tab3, text ="Timer").grid(column = 0, row = 0,  padx = 30, pady = 30) 
+
+
+    def check_fullscreen(self, event=None):
+        width, height = self.root.winfo_width(), self.root.winfo_height()
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+    
+    #still bugged
     def check_fullscreen(self, event=None):
         width, height = self.root.winfo_width(), self.root.winfo_height()
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         
         if width >= screen_width and height >= screen_height:
-            self.tabControl.pack_forget()
+            if self.tabControl.index("current") != 0:
+                self.current_tab_index = self.tabControl.index("current")
+            for i in range(1, self.tabControl.index("end")):
+                self.tabControl.hide(i)
+            self.tabControl.select(0)
         else:
-            self.tabControl.pack(expand=1, fill="both")
+            if not self.tabControl.tab(1, "state") == "normal":
+                for i in range(1, self.tabControl.index("end")):
+                    self.tabControl.add(self.tabControl.winfo_children()[i])
+                self.tabControl.select(self.current_tab_index)
 
-    
 
 root: Tk = tk.Tk()
 app = ImageApp(root)
