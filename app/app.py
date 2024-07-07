@@ -6,6 +6,8 @@ from tkinter import ttk
 import ttkbootstrap as tb
 from PIL import Image
 from PIL import ImageTk 
+from tkinter import messagebox
+
 
 
 # Creates the database if none is existing 
@@ -46,9 +48,9 @@ class ImageApp:
         self.tabControl = ttk.Notebook(self.root)
         self.current_tab_index = 0
         #self.images: list = get_images()
-        self.tab1: ttk.Frame = ttk.Frame(self.tabControl)
-        self.tab2: ttk.Frame = ttk.Frame(self.tabControl)
-        self.tab3: ttk.Frame = ttk.Frame(self.tabControl)
+        self.photo_page: ttk.Frame = ttk.Frame(self.root)
+        self.add_photo: ttk.Frame = ttk.Frame(self.tabControl)
+        self.timer: ttk.Frame = ttk.Frame(self.tabControl)
 
         self.create_photo_tab()
         self.create_add_photo_tab()
@@ -59,45 +61,65 @@ class ImageApp:
         self.root.bind('<Configure>', self.check_fullscreen)
     
     def create_photo_tab(self):
-        self.tabControl.add(self.tab1,text ='Photo') 
-        ttk.Label(self.tab1, text ="Photo").grid(column = 0, row = 0, padx = 30, pady = 30) 
+        ttk.Label(self.photo_page, text ="Photo").grid(column = 0, row = 0, padx = 30, pady = 30) 
 
     def create_add_photo_tab(self):
+        self.tabControl.add(self.add_photo, text ='Add Photo') 
 
-        self.tabControl.add(self.tab2, text ='Add Photo') 
-        self.tabControl.pack(expand = 1, fill ="both") 
-        ttk.Label(self.tab2, text ="Add Photo").grid(column = 0, row = 0,  padx = 30, pady = 30) 
+        
+        # Create form elements
+        ttk.Label(self.add_photo, text="First Name:").grid(column=0, row=0, padx=10, pady=10, sticky='w')
+        self.first_name_entry = ttk.Entry(self.add_photo)
+        self.first_name_entry.grid(column=1, row=0, padx=10, pady=10)
+
+        ttk.Label(self.add_photo, text="Last Name:").grid(column=0, row=1, padx=10, pady=10, sticky='w')
+        self.last_name_entry = ttk.Entry(self.add_photo)
+        self.last_name_entry.grid(column=1, row=1, padx=10, pady=10)
+
+        ttk.Label(self.add_photo, text="Image Path:").grid(column=0, row=2, padx=10, pady=10, sticky='w')
+        self.image_path_entry = ttk.Entry(self.add_photo)
+        self.image_path_entry.grid(column=1, row=2, padx=10, pady=10)
+
+        self.submit_button = ttk.Button(self.add_photo, text="Submit", command=self.submit_form)
+        self.submit_button.grid(column=0, row=3, columnspan=2, pady=20)
+
 
     def create_timer_page(self):
 
-        self.tabControl.add(self.tab3, text ='Timer') 
+        self.tabControl.add(self.timer, text ='Timer') 
         self.tabControl.pack(expand = 1, fill ="both") 
-        ttk.Label(self.tab3, text ="Timer").grid(column = 0, row = 0,  padx = 30, pady = 30) 
+        ttk.Label(self.timer, text ="Timer").grid(column = 0, row = 0,  padx = 30, pady = 30) 
 
 
-    def check_fullscreen(self, event=None):
-        width, height = self.root.winfo_width(), self.root.winfo_height()
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
+    def submit_form(self):
+        first_name = self.first_name_entry.get()
+        last_name = self.last_name_entry.get()
+        image_path = self.image_path_entry.get()
+        
+        if first_name and last_name and image_path:
+            add_image(first_name, last_name, image_path)
+            messagebox.showinfo("Success", "Image added successfully!")
+            self.first_name_entry.delete(0, tk.END)
+            self.last_name_entry.delete(0, tk.END)
+            self.image_path_entry.delete(0, tk.END)
+        else:
+            messagebox.showwarning("Error", "Please fill out all fields.")
+
+
+
+
     
-    #still bugged
     def check_fullscreen(self, event=None):
         width, height = self.root.winfo_width(), self.root.winfo_height()
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         
         if width >= screen_width and height >= screen_height:
-            if self.tabControl.index("current") != 0:
-                self.current_tab_index = self.tabControl.index("current")
-            for i in range(1, self.tabControl.index("end")):
-                self.tabControl.hide(i)
-            self.tabControl.select(0)
+            self.tabControl.pack_forget()
+            self.photo_page.pack(expand=1, fill="both")
         else:
-            if not self.tabControl.tab(1, "state") == "normal":
-                for i in range(1, self.tabControl.index("end")):
-                    self.tabControl.add(self.tabControl.winfo_children()[i])
-                self.tabControl.select(self.current_tab_index)
-
+            self.photo_page.pack_forget()
+            self.tabControl.pack(expand=1, fill="both")
 
 root: Tk = tk.Tk()
 app = ImageApp(root)
