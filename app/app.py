@@ -41,12 +41,15 @@ class ImageApp:
         self.add_photo: ttk.Frame = ttk.Frame(self.tabControl)
         self.timer: ttk.Frame = ttk.Frame(self.tabControl)
         self.database: ttk.Frame = ttk.Frame(self.tabControl)
+        self.delete_id: ttk.Frame = ttk.Frame(self.tabControl)
+
 
 
         self.create_photo_tab()
         self.create_add_photo_tab()
         self.create_timer_tab()
         self.create_database_tab()
+        self.create_delete_tab()
 
         
         
@@ -55,6 +58,8 @@ class ImageApp:
     
     def create_photo_tab(self):
         ttk.Label(self.photo_page, text ="Photo").grid(column = 0, row = 0, padx = 30, pady = 30) 
+    
+
 
     def create_add_photo_tab(self):
         self.tabControl.add(self.add_photo, text ='Add Photo') 
@@ -87,6 +92,16 @@ class ImageApp:
         self.tabControl.pack(expand = 1, fill ="both") 
         ttk.Label(self.timer, text ="Timer").grid(column = 0, row = 0,  padx = 30, pady = 30) 
 
+    def create_delete_tab(self):
+
+        self.tabControl.add(self.delete_id, text ='Delete Id') 
+        ttk.Label(self.delete_id, text="Delete id:").grid(column=0, row=0, padx=10, pady=10, sticky='w')
+        self.id_to_delete = ttk.Entry(self.delete_id)
+        self.id_to_delete.grid(column=1, row=0, padx=10, pady=10)
+
+        self.delete_button = ttk.Button(self.delete_id, text="Delete", command=self.delete_submit)
+        self.delete_button.grid(column=0, row=4, columnspan=2, pady=20)
+
     def create_database_tab(self):
 
         self.tabControl.add(self.database, text ='Database') 
@@ -118,6 +133,25 @@ class ImageApp:
         # Schedule next update
         tree.after(5000, self.update_database_tab, tree) 
 
+    def delete_submit(self):
+        id_to_delete = self.id_to_delete.get()
+        if id_to_delete:
+            try:
+                conn = sqlite3.connect('images.db')
+                c = conn.cursor()
+                c.execute("DELETE FROM images WHERE id=?", (id_to_delete,))
+                conn.commit()
+                messagebox.showinfo("Success", f"Deleted User Id: {id_to_delete}")
+                self.id_to_delete.delete(0, tk.END)
+            except:
+                messagebox.showwarning("Error", "Can't connect to database")
+            finally:
+                conn.close()
+        else:
+            messagebox.showwarning("Error", "Please fill out all fields.")
+
+
+
     def submit_form(self):
         first_name = self.first_name_entry.get()
         last_name = self.last_name_entry.get()
@@ -126,7 +160,6 @@ class ImageApp:
         
         if first_name and last_name and image_path:
             try:
-                image_path = "./images/" + image_path
                 conn = sqlite3.connect('images.db')
                 c = conn.cursor()
                 c.execute("INSERT INTO images (first_name, last_name, path, phone_number) VALUES (?, ?, ?, ?)", (first_name,last_name,image_path, phone))
@@ -136,7 +169,6 @@ class ImageApp:
                 self.first_name_entry.delete(0, tk.END)
                 self.last_name_entry.delete(0, tk.END)
                 self.phone.delete(0, tk.END)
-
                 self.image_path_entry.delete(0, tk.END)
             except:
                 messagebox.showwarning("Error", "Can't connect to database")
@@ -159,7 +191,7 @@ class ImageApp:
             self.tabControl.pack(expand=1, fill="both")
 
 create_database()
-root: Tk = tk.Tk()
+root: Tk = tk.Tk()  
 app = ImageApp(root)
 
 root.mainloop()
