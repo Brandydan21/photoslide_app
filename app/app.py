@@ -4,8 +4,7 @@ import os
 from tkinter import * 
 from tkinter import ttk
 import ttkbootstrap as tb
-from PIL import Image
-from PIL import ImageTk 
+from PIL import ImageTk, Image
 from tkinter import messagebox
 
 
@@ -57,7 +56,21 @@ class ImageApp:
         self.root.bind('<Configure>', self.check_fullscreen)
     
     def create_photo_tab(self):
-        ttk.Label(self.photo_page, text ="Photo").grid(column = 0, row = 0, padx = 30, pady = 30) 
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Load the image file using Pillow
+        image = Image.open("./photo/dog.webp")
+
+        # Resize the image to fit the screen
+        image = image.resize((screen_width, screen_height), Image.LANCZOS)
+        photo = ImageTk.PhotoImage(image)
+
+        # Create a label and set the image
+        label = tk.Label(self.photo_page, image=photo)
+        label.image = photo  # Keep a reference to the image to prevent garbage collection
+        label.pack(fill='both', expand=True)
+
     
 
 
