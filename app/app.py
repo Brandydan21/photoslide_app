@@ -41,7 +41,9 @@ class ImageApp:
         self.timer: ttk.Frame = ttk.Frame(self.tabControl)
         self.database: ttk.Frame = ttk.Frame(self.tabControl)
         self.delete_id: ttk.Frame = ttk.Frame(self.tabControl)
-
+        self.image_path = ["./photo/dog.webp","./photo/dog-8198719_640.webp","./photo/pexels-photo-1108099.jpeg"]
+        self.current_index = 0
+        self.max_index = len(self.image_path)
 
 
         self.create_photo_tab()
@@ -58,9 +60,10 @@ class ImageApp:
     def create_photo_tab(self):
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        
+        current_image_path = self.image_path[self.current_index]
+
         # Load the image file using Pillow
-        image = Image.open("./photo/dog.webp")
+        image = Image.open(current_image_path)
 
         # Resize the image to fit the screen
         image = image.resize((screen_width, screen_height), Image.LANCZOS)
@@ -71,6 +74,11 @@ class ImageApp:
         label.image = photo  # Keep a reference to the image to prevent garbage collection
         label.pack(fill='both', expand=True)
 
+        # Change image every 3000 milliseconds (3 seconds)
+
+    def update_image(self):
+        self.current_index = (self.current_index + 1) % len(self.image_path)
+        self.root.after(30000, self.update_image)
     
 
 
