@@ -41,26 +41,33 @@ class ImageApp:
         self.timer: ttk.Frame = ttk.Frame(self.tabControl)
         self.database: ttk.Frame = ttk.Frame(self.tabControl)
         self.delete_id: ttk.Frame = ttk.Frame(self.tabControl)
-        self.image_path = ["./photo/dog.webp","./photo/dog-8198719_640.webp","./photo/pexels-photo-1108099.jpeg"]
+        self.image_paths = ["./photo/dog.webp","./photo/dog-8198719_640.webp","./photo/pexels-photo-1108099.jpeg"]
         self.current_index = 0
-        self.max_index = len(self.image_path)
+        self.max_index = len(self.image_paths)
+        self.label = tk.Label(self.photo_page)
+        self.label.pack(fill='both', expand=True)
+        self.fullscreen = False
+        self.root.bind('<Configure>', self.check_fullscreen)
 
-
-        self.create_photo_tab()
+       # self.create_photo_tab()
         self.create_add_photo_tab()
         self.create_timer_tab()
         self.create_database_tab()
         self.create_delete_tab()
 
+        self.update_image() 
+      
         
-        
-        self.fullscreen = False
-        self.root.bind('<Configure>', self.check_fullscreen)
+     
     
-    def create_photo_tab(self):
+    # def create_photo_tab(self):
+    #     self.tabControl.add(self.photo_page)
+    #     self.tabControl.
+
+    def update_image(self):
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        current_image_path = self.image_path[self.current_index]
+        current_image_path = self.image_paths[self.current_index]
 
         # Load the image file using Pillow
         image = Image.open(current_image_path)
@@ -69,18 +76,12 @@ class ImageApp:
         image = image.resize((screen_width, screen_height), Image.LANCZOS)
         photo = ImageTk.PhotoImage(image)
 
-        # Create a label and set the image
-        label = tk.Label(self.photo_page, image=photo)
-        label.image = photo  # Keep a reference to the image to prevent garbage collection
-        label.pack(fill='both', expand=True)
+        # Update the label with the new image
+        self.label.config(image=photo)
+        self.label.image = photo  # Keep a reference to the image to prevent garbage collection
 
-        # Change image every 3000 milliseconds (3 seconds)
-
-    def update_image(self):
-        self.current_index = (self.current_index + 1) % len(self.image_path)
-        self.root.after(30000, self.update_image)
-    
-
+        self.current_index = (self.current_index + 1) % len(self.image_paths)
+        self.root.after(3000, self.update_image)
 
     def create_add_photo_tab(self):
         self.tabControl.add(self.add_photo, text ='Add Photo') 
