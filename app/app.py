@@ -6,6 +6,8 @@ from tkinter import ttk
 import ttkbootstrap as tb
 from PIL import ImageTk, Image
 from tkinter import messagebox
+import threading
+import time
 
 
 
@@ -25,7 +27,31 @@ def get_images() -> list:
     rows = c.fetchall()
     conn.commit()
     conn.close()
+    
+    
     return rows
+
+def get_path_from_id(id):
+    conn = sqlite3.connect('images.db')
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM images WHERE id={id}")
+    rows = c.fetchall()
+    conn.commit()
+    conn.close()
+    return rows[0][3]
+    
+def get_image_paths() -> list:
+    conn = sqlite3.connect('images.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM images")
+    rows = c.fetchall()
+    conn.commit()
+    conn.close()
+    image_paths = []
+    for row in rows:
+        image_paths.append(row[3])
+
+    return image_paths
 
 class ImageApp:
     def __init__(self,root):
@@ -41,7 +67,7 @@ class ImageApp:
         self.timer: ttk.Frame = ttk.Frame(self.tabControl)
         self.database: ttk.Frame = ttk.Frame(self.tabControl)
         self.delete_id: ttk.Frame = ttk.Frame(self.tabControl)
-        self.image_paths = ["./photo/dog.webp","./photo/dog-8198719_640.webp","./photo/pexels-photo-1108099.jpeg"]
+        self.image_paths = get_image_paths()
         self.current_index = 0
         self.max_index = len(self.image_paths)
         self.label = tk.Label(self.photo_page)
@@ -59,15 +85,11 @@ class ImageApp:
       
         
      
-    
-    # def create_photo_tab(self):
-    #     self.tabControl.add(self.photo_page)
-    #     self.tabControl.
 
     def update_image(self):
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        current_image_path = self.image_paths[self.current_index]
+        current_image_path = "./photo/" + self.image_paths[self.current_index]
 
         # Load the image file using Pillow
         image = Image.open(current_image_path)
@@ -81,7 +103,7 @@ class ImageApp:
         self.label.image = photo  # Keep a reference to the image to prevent garbage collection
 
         self.current_index = (self.current_index + 1) % len(self.image_paths)
-        self.root.after(3000, self.update_image)
+        self.root.after(5000, self.update_image)
 
     def create_add_photo_tab(self):
         self.tabControl.add(self.add_photo, text ='Add Photo') 
@@ -112,7 +134,12 @@ class ImageApp:
 
         self.tabControl.add(self.timer, text ='Timer') 
         self.tabControl.pack(expand = 1, fill ="both") 
-        ttk.Label(self.timer, text ="Timer").grid(column = 0, row = 0,  padx = 30, pady = 30) 
+        ttk.Label(self.timer, text="Display id:").grid(column=0, row=0, padx=10, pady=10, sticky='w')
+        self.id_to_time = ttk.Entry(self.timer)
+        self.id_to_time.grid(column=1, row=0, padx=10, pady=10)
+        self.time_button = ttk.Button(self.timer, text="Display Image", command=self.hold_image)
+        self.time_button.grid(column=0, row=4, columnspan=2, pady=20)
+
 
     def create_delete_tab(self):
 
@@ -165,6 +192,8 @@ class ImageApp:
                 conn.commit()
                 messagebox.showinfo("Success", f"Deleted User Id: {id_to_delete}")
                 self.id_to_delete.delete(0, tk.END)
+                self.image_paths=get_image_paths()
+
             except:
                 messagebox.showwarning("Error", "Can't connect to database")
             finally:
@@ -172,8 +201,20 @@ class ImageApp:
         else:
             messagebox.showwarning("Error", "Please fill out all fields.")
 
+    def hold_image(self):
+        hold_paths = self.image_paths
+        id = self.id_to_time.get()
+        image_path_to_hold = get_path_from_id(id)
+        self.image_paths = image_path_to_hold
+        
+        def revert_image_paths():
+            time.sleep(10)
+            self.image_paths = hold_paths
 
+        threading.Thread(target=revert_image_paths).start()
+        self.image_paths = hold_paths
 
+     
     def submit_form(self):
         first_name = self.first_name_entry.get()
         last_name = self.last_name_entry.get()
@@ -192,6 +233,7 @@ class ImageApp:
                 self.last_name_entry.delete(0, tk.END)
                 self.phone.delete(0, tk.END)
                 self.image_path_entry.delete(0, tk.END)
+                self.image_paths=get_image_paths()
             except:
                 messagebox.showwarning("Error", "Can't connect to database")
             finally:
