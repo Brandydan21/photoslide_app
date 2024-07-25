@@ -1,14 +1,10 @@
 import tkinter as tk
 import sqlite3
-import os
 from tkinter import * 
 from tkinter import ttk
 import ttkbootstrap as tb
 from PIL import ImageTk, Image
 from tkinter import messagebox
-import threading
-import time
-
 
 
 # Creates the database if none is existing 
@@ -74,6 +70,7 @@ class ImageApp:
         self.label.pack(fill='both', expand=True)
         self.fullscreen = False
         self.root.bind('<Configure>', self.check_fullscreen)
+        self.is_static = False
 
        # self.create_photo_tab()
         self.create_add_photo_tab()
@@ -83,27 +80,28 @@ class ImageApp:
 
         self.update_image() 
       
-        
-     
+    
 
     def update_image(self):
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        current_image_path = "./photo/" + self.image_paths[self.current_index]
+        if self.is_static == False:
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+            current_image_path = "./photo/" + self.image_paths[self.current_index]
 
-        # Load the image file using Pillow
-        image = Image.open(current_image_path)
+            # Load the image file using Pillow
+            image = Image.open(current_image_path)
 
-        # Resize the image to fit the screen
-        image = image.resize((screen_width, screen_height), Image.LANCZOS)
-        photo = ImageTk.PhotoImage(image)
+            # Resize the image to fit the screen
+            image = image.resize((screen_width, screen_height), Image.LANCZOS)
+            photo = ImageTk.PhotoImage(image)
 
-        # Update the label with the new image
-        self.label.config(image=photo)
-        self.label.image = photo  # Keep a reference to the image to prevent garbage collection
+            # Update the label with the new image
+            self.label.config(image=photo)
+            self.label.image = photo  # Keep a reference to the image to prevent garbage collection
 
-        self.current_index = (self.current_index + 1) % len(self.image_paths)
-        self.root.after(5000, self.update_image)
+            self.current_index = (self.current_index + 1) % len(self.image_paths)
+            self.root.after(5000, self.update_image)
+        
 
     def create_add_photo_tab(self):
         self.tabControl.add(self.add_photo, text ='Add Photo') 
@@ -201,20 +199,31 @@ class ImageApp:
         else:
             messagebox.showwarning("Error", "Please fill out all fields.")
 
+    def restart_loop(self):
+        self.is_static = False
+        self.update_image()
+
     def hold_image(self):
         hold_paths = self.image_paths
         id = self.id_to_time.get()
         image_path_to_hold = get_path_from_id(id)
-        self.image_paths = image_path_to_hold
-        
-        def revert_image_paths():
-            time.sleep(10)
-            self.image_paths = hold_paths
+        self.is_static = True
+        self.update_image()
 
-        threading.Thread(target=revert_image_paths).start()
-        self.image_paths = hold_paths
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        current_image_path = "./photo/" + image_path_to_hold
 
-     
+        image = Image.open(current_image_path)
+
+        image = image.resize((screen_width, screen_height), Image.LANCZOS)
+        photo = ImageTk.PhotoImage(image)
+
+        self.label.config(image=photo)
+        self.label.image = photo 
+
+        self.root.after(10000, self.restart_loop)
+    
     def submit_form(self):
         first_name = self.first_name_entry.get()
         last_name = self.last_name_entry.get()
