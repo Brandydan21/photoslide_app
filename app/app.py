@@ -4,7 +4,7 @@ from tkinter import *
 from tkinter import ttk
 import ttkbootstrap as tb
 from PIL import ImageTk, Image
-from tkinter import messagebox, filedialog
+from tkinter import messagebox, filedialog, Toplevel
 import shutil
 import os
 
@@ -81,16 +81,51 @@ class ImageApp:
         self.fullscreen = False
         self.root.bind('<Configure>', self.check_fullscreen)
         self.is_static = False
+        self.after_id = None  # To keep track of the after event ID
+        self.cancel_id = None
+
 
        # self.create_photo_tab()
         self.create_add_photo_tab()
-        self.create_timer_tab()
         self.create_database_tab()
         self.update_image() 
-      
-    
+        self.root.bind("<Key>", self.on_key_press)  # Bind any key press event to the handler
+
+    def on_key_press(self, event):
+        # Check if photo_page is currently visible
+        if self.photo_page.winfo_ismapped():
+        # Check if a new window is already open
+            if not hasattr(self, 'hold_image_win') or not self.hold_image_win.winfo_exists():
+                self.hold_image_window()
+
+    def hold_image_window(self):
+        # Create a new Toplevel window
+        self.hold_image_win = tk.Toplevel(self.root)
+        self.hold_image_win.title("Timer Form")
+        self.hold_image_win.geometry("300x200")
+        
+        if self.is_static == False:
+
+            ttk.Label(self.hold_image_win, text="Display id:").grid(column=0, row=0, padx=10, pady=10, sticky='w')
+            self.id_to_time = ttk.Entry(self.hold_image_win)
+            self.id_to_time.grid(column=1, row=0, padx=10, pady=10)
+
+            ttk.Label(self.hold_image_win, text="Display Time (mins):").grid(column=0, row=1, padx=10, pady=10, sticky='w')
+            self.time_entry = ttk.Entry(self.hold_image_win)
+            self.time_entry.grid(column=1, row=1, padx=10, pady=10)
+
+            self.time_button = ttk.Button(self.hold_image_win, text="Display Image", command=self.hold_image)
+            self.time_button.grid(column=2, row=1,padx=10, pady=10)
+
+        else:
+            self.cancel_button = ttk.Button(self.hold_image_win, text="Cancel", command=self.cancel_hold)
+            self.cancel_button.grid(column=1, row=4 ,padx=10, pady=10)
 
     def update_image(self):
+        # Cancel the previous after event if it exists
+        if self.after_id is not None:
+            self.root.after_cancel(self.after_id)
+
         if self.is_static == False:
             screen_width = self.root.winfo_screenwidth()
             screen_height = self.root.winfo_screenheight()
@@ -98,29 +133,28 @@ class ImageApp:
 
             if self.image_paths != []:
                 current_image_path = "./photo/" + self.image_paths[self.current_index]
-                # Load the image file using Pillow
                 try:
                     image = Image.open(current_image_path)
-
-                    # Resize the image to fit the screen
                     image = image.resize((screen_width, screen_height), Image.LANCZOS)
                     photo = ImageTk.PhotoImage(image)
 
-                    # Update the label with the new image
                     self.label.config(image=photo)
-                    self.label.image = photo  # Keep a reference to the image to prevent garbage collection
+                    self.label.image = photo
 
                     self.current_index = (self.current_index + 1) % len(self.image_paths)
-                    self.root.after(5000, self.update_image)
-                except:
+                except Exception as e:
+                    print(f"Error loading image {current_image_path}: {e}")
                     self.current_index = (self.current_index + 1) % len(self.image_paths)
-                    self.root.after(5000, self.update_image)
             else:
                 self.current_index = 0
                 self.label.config(image=None)
                 self.label.image = None
-                self.root.after(5000, self.update_image)
 
+            # Schedule the next update
+            self.after_id = self.root.after(5000, self.update_image)
+
+
+            
 
     def create_add_photo_tab(self):
         self.tabControl.add(self.add_photo, text ='Add Photo') 
@@ -161,26 +195,6 @@ class ImageApp:
             self.image_path_entry.delete(0, 'end')
             self.image_path_entry.insert(0, file_path)
 
-
-    def create_timer_tab(self):
-
-        self.tabControl.add(self.timer, text ='Timer') 
-        self.tabControl.pack(expand = 1, fill ="both") 
-        
-        ttk.Label(self.timer, text="Display id:").grid(column=0, row=0, padx=10, pady=10, sticky='w')
-        self.id_to_time = ttk.Entry(self.timer)
-        self.id_to_time.grid(column=1, row=0, padx=10, pady=10)
-
-        ttk.Label(self.timer, text="Display Time (mins):").grid(column=0, row=1, padx=10, pady=10, sticky='w')
-        self.time_entry = ttk.Entry(self.timer)
-        self.time_entry.grid(column=1, row=1, padx=10, pady=10)
-
-        self.time_button = ttk.Button(self.timer, text="Display Image", command=self.hold_image)
-        self.time_button.grid(column=2, row=1,padx=10, pady=10)
-
-
-        self.cancel_button = ttk.Button(self.timer, text="Cancel", command=self.cancel_hold)
-        self.cancel_button.grid(column=1, row=4 ,padx=10, pady=10)
        
 
     def create_database_tab(self):
@@ -240,6 +254,8 @@ class ImageApp:
                     self.image_paths=get_image_paths()
 
                 self.update_database_tab()
+                self.current_index = 0
+                self.update_image()
 
         except:
             messagebox.showwarning("Error", "Can't connect to database")
@@ -248,6 +264,7 @@ class ImageApp:
     #After restart loop loop image is bugged
     def restart_loop(self):
         self.is_static = False
+        self.current_index = 0
         self.update_image()
 
     def check_int(self, value):
@@ -259,8 +276,12 @@ class ImageApp:
 
     def cancel_hold(self):
         if self.is_static:
+            if self.cancel_id:
+                self.cancel_id = None
+                
             self.restart_loop()
             messagebox.showwarning("Success", "Cancelled")
+            self.hold_image_win.destroy()
 
 
     def hold_image(self):
@@ -292,7 +313,9 @@ class ImageApp:
                         messagebox.showinfo("Success", f"Id: {id} will display for {int(time/60/1000)} minutes")
                         self.id_to_time.delete(0, tk.END)
                         self.time_entry.delete(0, tk.END)
-                        self.root.after(time, self.restart_loop)
+                        self.cancel_id = self.root.after(time, self.restart_loop)
+                        self.hold_image_win.destroy()
+
                     else:
                         messagebox.showwarning("Error", "Please enter a whole number")
    
@@ -322,8 +345,6 @@ class ImageApp:
             target_path = os.path.join(target_directory, os.path.basename(image_path))
             shutil.copy(image_path, target_path)
 
-
-
         if first_name and last_name and image_path:
             try:
                 conn = sqlite3.connect('images.db')
@@ -333,12 +354,14 @@ class ImageApp:
 
                 messagebox.showinfo("Success", "Image added successfully!")
                 self.update_database_tab()
+                self.update_image()
 
                 self.first_name_entry.delete(0, tk.END)
                 self.last_name_entry.delete(0, tk.END)
                 self.phone.delete(0, tk.END)
                 self.image_path_entry.delete(0, tk.END)
                 self.current_index = 0
+                self.update_image()
             except:
                 messagebox.showwarning("Error", "Can't connect to database")
             finally:
