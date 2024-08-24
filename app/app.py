@@ -143,7 +143,6 @@ class ImageApp:
 
                     self.current_index = (self.current_index + 1) % len(self.image_paths)
                 except Exception as e:
-                    print(f"Error loading image {current_image_path}: {e}")
                     self.current_index = (self.current_index + 1) % len(self.image_paths)
             else:
                 self.current_index = 0
@@ -278,7 +277,7 @@ class ImageApp:
         if self.is_static:
             if self.cancel_id:
                 self.cancel_id = None
-                
+
             self.restart_loop()
             messagebox.showwarning("Success", "Cancelled")
             self.hold_image_win.destroy()
